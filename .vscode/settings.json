@@ -1,0 +1,57 @@
+{
+  "search.useIgnoreFiles": true,
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/.venv/**": true,
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/target/**": true,
+    "**/.pytest_cache/**": true,
+    "**/.ruff_cache/**": true,
+    "**/__pycache__/**": true,
+    "**/.state/**": true
+  },
+  "search.exclude": {
+    "**/.venv/**": true,
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/target/**": true,
+    "**/.pytest_cache/**": true,
+    "**/.ruff_cache/**": true,
+    "**/__pycache__/**": true,
+    "**/.state/**": true,
+    "docs/archive/**": true
+  },
+  "files.exclude": {
+    "**/.pytest_cache": true,
+    "**/.ruff_cache": true,
+    "**/__pycache__": true,
+    ".venv": true,
+    "app/node_modules": true,
+    "app/dist": true,
+    "shell/target": true,
+    "commercial_backend/.state": true
+  },
+  "python.analysis.exclude": [
+    "**/.venv",
+    "**/__pycache__",
+    "**/.pytest_cache",
+    "**/.ruff_cache",
+    "**/.state",
+    "app/node_modules",
+    "app/dist",
+    "shell/target"
+  ],
+  "typescript.tsserver.watchOptions": {
+    "watchFile": "useFsEventsOnParentDirectory",
+    "watchDirectory": "useFsEvents",
+    "fallbackPolling": "dynamicPriority",
+    "excludeDirectories": [
+      "**/node_modules",
+      "**/dist",
+      "**/target",
+      "**/.venv"
+    ]
+  }
+}

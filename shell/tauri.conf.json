@@ -1,0 +1,24 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Miro Fish Desktop SaaS",
+  "version": "0.1.0",
+  "identifier": "com.mikesalazar.mirofishdesktopsaas",
+  "build": {
+    "devUrl": "http://127.0.0.1:1420",
+    "frontendDist": "../app/dist"
+  },
+  "bundle": {
+    "icon": ["icons/icon.ico"]
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Miro Fish Desktop SaaS",
+        "width": 1200,
+        "height": 800,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ]
+  }
+}

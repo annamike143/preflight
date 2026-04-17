@@ -1,0 +1,48 @@
+# OS and editor junk
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Keep the shared workspace settings, ignore other local VS Code files
+.vscode/*
+!.vscode/
+!.vscode/settings.json
+
+# Secrets and local environment files
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Python environments, caches, and build leftovers
+.venv/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.pytest_cache/
+**/.ruff_cache/
+**/.mypy_cache/
+**/.pytype/
+**/.state/
+.coverage
+htmlcov/
+.eggs/
+*.egg-info/
+pip-wheel-metadata/
+
+# Frontend dependencies and build output
+app/node_modules/
+app/dist/
+app/.vite/
+
+# Rust and Tauri build output
+shell/target/
+
+# Local databases, logs, and temp files
+*.log
+*.tmp
+*.temp
+*.sqlite3
+*.db-shm
+*.db-wal
