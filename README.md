@@ -9,19 +9,32 @@
 [![React](https://img.shields.io/badge/UI-React_18-61dafb.svg)](https://react.dev/)
 [![Python](https://img.shields.io/badge/Engine-Python_3.14+-yellow.svg)](https://python.org/)
 
-> **An open-source, local-first simulation engine that uses AI-moderated multi-agent debates to rigorously stress-test ideas, business offers, and technical RFCs before launch.**  
+> **The open-source, local-first AI multi-agent diligence engine. Stress-test technical RFCs before Codex writes code, and verify product, marketing, and business ideas before spending capital.**  
 > *Prepared for the [OpenAI Codex for OSS Grant](OPENAI_GRANT_PROPOSAL.md).*
 
 ---
 
-## The Problem
+## The Paradigm: Execution is Free. Verification is the New Bottleneck.
 
-Before launching an initiative—whether a high-stakes startup pitch, a major product RFC, a course curriculum, or a pricing model—creators and operators struggle to get rigorous, unbiased critical feedback. Most feedback is either:
+With OpenAI Codex, GPT-4o, and reasoning models, generating code, writing marketing copy, and drafting business proposals has become virtually free. But when generation costs zero, the world is flooded with half-baked ideas, ill-conceived marketing campaigns, and flawed software architectures.
+
+The bottleneck of the AI era is no longer **creation**—it is **pre-execution verification**.
+
+Today, vetting high-stakes ideas is broken:
 - **Echo-chamber validation:** Friendly peers giving polite approval.
-- **Prohibitively expensive:** Retaining human consulting teams or subject matter experts.
-- **Unstructured:** Ad-hoc single-prompt LLM chats that lack domain diversity, pushback persistence, and structured evaluation rubrics.
+- **AI Sycophancy:** Single-turn LLM prompts default to enthusiastic yes-men, praising proposals rather than stress-testing failure points.
+- **Prohibitive expense:** Retaining human management consultancies or security architects takes weeks and tens of thousands of dollars.
 
-**Preflight** solves this by generating **synthetic, domain-specialized stakeholder personas at runtime** and orchestrating an **AI-moderated multi-agent debate** over your source documents. The output is a publication-grade **Executive Diligence & Stress-Test PDF Report** with quantified viability scores, blind spots, consensus areas, and prioritized recommendations.
+**Preflight** solves this by deploying **adversarial, domain-specialized stakeholder personas at runtime** and orchestrating an **AI-moderated multi-agent debate** over your proposals. The output is a publication-grade **Executive Diligence & Stress-Test PDF Report** with quantified viability scores (0–100), critical blind spots, and prioritized recommendations.
+
+### Two Native Operating Tracks
+
+| Track 1: Software Architecture & Pre-Codex Diligence | Track 2: Product Ideation, GTM & Marketing Diligence |
+| :--- | :--- |
+| **For:** Software Engineers, Tech Leads, Open-Source Maintainers | **For:** Startup Founders, Product Managers, Growth Marketers |
+| **Inputs:** System designs, database schemas, technical RFCs | **Inputs:** Product PRDs, GTM campaigns, pitch decks, pricing models |
+| **Agents:** Skeptical Architect, Security Modeler, SRE, FinOps | **Agents:** Cynical Buyer, Frugal CFO, Direct Competitor, Marketer |
+| **Impact:** Hardens blueprints before OpenAI Codex generates code | **Impact:** Spots churn & CAC risks before ad budgets are spent |
 
 ---
 
@@ -112,19 +125,24 @@ preflight/
 
 ### Option 1: Evaluate in 10 Seconds via Headless CLI (Terminal)
 
-Test any seed RFC directly without launching the GUI:
+Test any seed proposal directly without launching the desktop GUI:
 
 ```powershell
 # 1. Initialize environment & install engine
 py -3.14 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -e .\engine
 
-# 2. Run dry-run validation on sample RFC
+# 2. Run instant dry-run validation
 .\.venv\Scripts\python.exe -m miro_fish_engine.cli --seed engine/evals/test_seeds/api_rfc.md --dry-run
 
-# 3. Run full multi-agent simulation and generate PDF report
+# 3. Run full multi-agent simulation with your OpenAI API key
 $env:OPENAI_API_KEY = "sk-..."
+
+# Track 1: Stress-test a Technical Architecture RFC (Pre-Codex)
 .\.venv\Scripts\python.exe -m miro_fish_engine.cli --seed engine/evals/test_seeds/api_rfc.md -o ./rfc_diligence_report.pdf
+
+# Track 2: Stress-test a Product / Marketing Launch Pitch (Ideation & GTM)
+.\.venv\Scripts\python.exe -m miro_fish_engine.cli --seed engine/evals/test_seeds/saas_pitch.md -o ./marketing_diligence_report.pdf
 ```
 
 ---

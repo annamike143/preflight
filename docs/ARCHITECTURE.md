@@ -57,11 +57,16 @@ Preflight separates presentation, privileged orchestration, simulation execution
 
 ### C. The Multi-Agent Simulation Engine (`engine/`)
 - **Technology:** Python 3.14+, `openai` SDK, `pydantic`, `reportlab`.
-- **Persona Extraction:** Analyzes seed texts to synthesize 4 to 6 orthogonal stakeholder personas (e.g. *Enterprise Buyer*, *Security Auditor*, *Domain Purist*, *Financial Controller*).
+- **Domain-Adaptive Persona Extraction:** Analyzes seed texts to synthesize 4 to 6 orthogonal stakeholder personas dynamically adapted to the seed document's domain:
+  - *Technical Architecture Track:* Spawns Skeptical Principal Architect, Security & Threat Modeler, Site Reliability / Distributed Systems Engineer, and FinOps / Cost Controller.
+  - *Product & Marketing Ideation Track:* Spawns Cynical Target Customer, Frugal CFO / Budget Gatekeeper, Direct Competitor, and Growth Marketing Strategist.
 - **Zero Swarm Chaos:** Naive multi-agent swarms collapse when all agents speak at once. Preflight enforces a **Moderator-directed protocol**:
   1. The Moderator establishes the round agenda.
   2. Exactly 3 to 5 personas are selected to speak based on the agenda.
   3. Rolling summaries compact conversation history to preserve bounded context windows.
+- **Dual Verification Tracks:**
+  - *Pre-Codex Track:* Validates system design docs and specifications so OpenAI Codex can generate zero-defect code.
+  - *Pre-Launch GTM Track:* Validates product positioning, customer willingness-to-pay, and churn risks before marketing capital is committed.
 - **Report Generation:** Generates a publication-grade PDF report with viability scores (0-100), key pushback points, blind spots, and transcript appendices.
 
 ---
