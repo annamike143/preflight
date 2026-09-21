@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+import concurrent.futures
 import json
 import time
 from dataclasses import dataclass
@@ -13,6 +15,8 @@ from .bounded_memory import (
     update_bounded_memory_for_round,
     write_bounded_memory_foundation,
 )
+from .openai_client import LLMTurnResponse, MiroFishOpenAIClient
+from .prompts import PERSONA_TURN_SYSTEM_PROMPT
 from .token_duration_tracking import (
     ExecutionPhaseState,
     TokenDurationTrackingState,
@@ -83,7 +87,11 @@ def execute_moderated_rounds(
     max_duration_cap_ms: int,
     execution_control_path: Path | None = None,
     execution_phase_path: Path | None = None,
+    openai_client: MiroFishOpenAIClient | None = None,
 ) -> ModeratedExecutionResult:
+    if openai_client is None:
+        openai_client = MiroFishOpenAIClient()
+
     participants = tuple(
         ParticipantRuntimeState(
             stable_label=persona["stable_label"],
@@ -157,25 +165,77 @@ def execute_moderated_rounds(
         for turn_index, participant in enumerate(selected_speakers, start=1):
             raise_if_execution_interrupted(execution_control_path)
             turn_started_at = time.perf_counter_ns()
-            turn_text = build_turn_text(
-                participant,
-                round_number=round_number,
-                turn_index=turn_index,
-                seed_excerpt=seed_excerpt,
-                topic_keywords=topic_keywords,
-                prior_summary=prior_summary,
-            )
+            turn_text: str | None = None
+            llm_usage = None
+
+            if openai_client and openai_client.is_configured:
+                try:
+                    sys_prompt = PERSONA_TURN_SYSTEM_PROMPT.format(
+                        persona_name=participant.stable_label,
+                        stable_label=participant.stable_label,
+                        perspective=participant.perspective,
+                        bias_description=participant.perspective,
+                        focus_domain=participant.focus_note,
+                        key_critique_vector=participant.focus_note,
+                    )
+                    user_msg = (
+                        f"Seed Excerpt:\n{seed_excerpt[:600]}\n\n"
+                        f"Round {round_number}, Turn {turn_index}.\n"
+                        f"Prior Round Context:\n{prior_summary or 'Opening round.'}\n\n"
+                        f"State your direct, critical perspective on the seed assumptions."
+                    )
+                    try:
+                        loop = asyncio.get_event_loop()
+                    except RuntimeError:
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+
+                    if loop.is_running():
+                        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                            turn_resp: LLMTurnResponse = pool.submit(
+                                asyncio.run,
+                                openai_client.generate_chat_turn(
+                                    system_prompt=sys_prompt,
+                                    messages=[{"role": "user", "content": user_msg}],
+                                ),
+                            ).result()
+                    else:
+                        turn_resp = loop.run_until_complete(
+                            openai_client.generate_chat_turn(
+                                system_prompt=sys_prompt,
+                                messages=[{"role": "user", "content": user_msg}],
+                            )
+                        )
+                    turn_text = turn_resp.content
+                    llm_usage = turn_resp.usage
+                except Exception:
+                    turn_text = None
+
+            if turn_text is None:
+                turn_text = build_turn_text(
+                    participant,
+                    round_number=round_number,
+                    turn_index=turn_index,
+                    seed_excerpt=seed_excerpt,
+                    topic_keywords=topic_keywords,
+                    prior_summary=prior_summary,
+                )
+
             duration_ms = max(1, int((time.perf_counter_ns() - turn_started_at) / 1_000_000))
             occurred_at = max(1, int(time.time_ns() / 1_000_000))
-            input_token_units = estimate_token_units(
-                seed_excerpt,
-                participant.focus_note,
-                prior_summary or "",
-                " ".join(memory.argument_risk.arguments[-3:]),
-                " ".join(memory.argument_risk.objections[-3:]),
-                " ".join(memory.argument_risk.risks[-3:]),
-            )
-            output_token_units = estimate_token_units(turn_text)
+            if llm_usage is not None:
+                input_token_units = llm_usage.input_tokens
+                output_token_units = llm_usage.output_tokens
+            else:
+                input_token_units = estimate_token_units(
+                    seed_excerpt,
+                    participant.focus_note,
+                    prior_summary or "",
+                    " ".join(memory.argument_risk.arguments[-3:]),
+                    " ".join(memory.argument_risk.objections[-3:]),
+                    " ".join(memory.argument_risk.risks[-3:]),
+                )
+                output_token_units = estimate_token_units(turn_text)
             turn_record = TurnTokenDurationRecord(
                 round_number=round_number,
                 turn_index=turn_index,

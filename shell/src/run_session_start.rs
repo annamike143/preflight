@@ -28,6 +28,10 @@ use crate::run_workspace_allocation::{
     allocate_fresh_run_workspace, RunWorkspaceAllocationFailureReason,
     RunWorkspaceAllocationSnapshot,
 };
+use crate::provider_configuration_contract::SupportedProvider;
+use crate::provider_configuration_submission::retrieve_provider_secret_with_components;
+use crate::provider_secure_store::ProviderSecureStore;
+use crate::provider_support_store::ProviderSupportStore;
 use crate::report_storage_boundary::materialize_durable_report_artifact;
 
 static RUN_SESSION_STATE: OnceLock<Mutex<StoredRunSessionState>> = OnceLock::new();
@@ -2742,12 +2746,26 @@ fn run_engine_module<T: DeserializeOwned>(
     let engine_python = env::var("MIRO_FISH_ENGINE_PYTHON").unwrap_or_else(|_| "python".to_string());
     let pythonpath = build_engine_pythonpath()?;
 
-    let mut child = Command::new(engine_python)
+    let mut command = Command::new(engine_python);
+    command
         .arg("-m")
         .arg(module_name)
         .arg("--workspace-root")
         .arg(workspace_root_path)
-        .env("PYTHONPATH", pythonpath)
+        .env("PYTHONPATH", pythonpath);
+
+    let secure_store = ProviderSecureStore::os_native();
+    if let Ok(support_store) = ProviderSupportStore::default_store() {
+        if let Ok(Some(secret)) = retrieve_provider_secret_with_components(
+            SupportedProvider::OpenAi,
+            &secure_store,
+            &support_store,
+        ) {
+            command.env("OPENAI_API_KEY", secret.api_key);
+        }
+    }
+
+    let mut child = command
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()

@@ -349,12 +349,36 @@ pub fn resolve_lifecycle_state(
     activation_validation_status: ActivationValidationStatus,
     configuration_ready: bool,
 ) -> &'static str {
+    resolve_lifecycle_state_with_mode(
+        runtime_ready,
+        runtime_hydration_active,
+        activation_validation_status,
+        configuration_ready,
+        crate::activation_readiness::current_execution_mode(),
+    )
+}
+
+pub fn resolve_lifecycle_state_with_mode(
+    runtime_ready: bool,
+    runtime_hydration_active: bool,
+    activation_validation_status: ActivationValidationStatus,
+    configuration_ready: bool,
+    execution_mode: crate::activation_readiness::ExecutionMode,
+) -> &'static str {
     if !runtime_ready {
         if runtime_hydration_active {
             return STATE_RUNTIME_HYDRATING;
         }
 
         return STATE_RUNTIME_HYDRATION_REQUIRED;
+    }
+
+    if execution_mode == crate::activation_readiness::ExecutionMode::Community {
+        return if configuration_ready {
+            STATE_READY_IDLE
+        } else {
+            STATE_CONFIGURATION_REQUIRED
+        };
     }
 
     match activation_validation_status {
@@ -467,6 +491,30 @@ mod tests {
         );
         assert_eq!(
             resolve_lifecycle_state(true, false, ActivationValidationStatus::ActivatedValid, true),
+            STATE_READY_IDLE
+        );
+    }
+
+    #[test]
+    fn resolve_lifecycle_state_supports_community_mode() {
+        assert_eq!(
+            resolve_lifecycle_state_with_mode(
+                true,
+                false,
+                ActivationValidationStatus::ActivationRequired,
+                false,
+                crate::activation_readiness::ExecutionMode::Community,
+            ),
+            STATE_CONFIGURATION_REQUIRED
+        );
+        assert_eq!(
+            resolve_lifecycle_state_with_mode(
+                true,
+                false,
+                ActivationValidationStatus::ActivationRequired,
+                true,
+                crate::activation_readiness::ExecutionMode::Community,
+            ),
             STATE_READY_IDLE
         );
     }

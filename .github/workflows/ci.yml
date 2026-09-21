@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  engine-tests:
+    name: Python Engine Verification
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ./engine -e ./commercial_backend pytest ruff pytest-asyncio
+
+      - name: Lint with Ruff
+        run: |
+          python -m ruff check engine
+
+      - name: Run Engine Tests
+        run: |
+          python -m pytest engine/tests
+
+  frontend-tests:
+    name: Frontend Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: ./app
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: ./app
+        run: npm run lint
+
+      - name: Run TypeScript typecheck
+        working-directory: ./app
+        run: npm run typecheck
+
+      - name: Run Vitest Unit & Wave Tests
+        working-directory: ./app
+        run: npm run test
+
+      - name: Run Frontend Build
+        working-directory: ./app
+        run: npm run build
+
+  shell-tests:
+    name: Tauri Rust Shell Verification
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "./shell -> target"
+
+      - name: Cargo Check
+        working-directory: ./shell
+        run: cargo check
+
+      - name: Cargo Clippy
+        working-directory: ./shell
+        run: cargo clippy -- -D warnings
+
+      - name: Cargo Test
+        working-directory: ./shell
+        run: cargo test

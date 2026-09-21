@@ -637,6 +637,10 @@ fn build_shell_scaffold() -> tauri::Builder<tauri::Wry> {
 }
 
 fn main() {
+    if std::env::var(activation_readiness::PREFLIGHT_EXECUTION_MODE_ENV_VAR).is_err() {
+        std::env::set_var(activation_readiness::PREFLIGHT_EXECUTION_MODE_ENV_VAR, "community");
+    }
+
     let _ = startup_janitor_execution::ensure_startup_janitor_executed();
 
     build_shell_scaffold()

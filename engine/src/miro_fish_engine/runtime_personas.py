@@ -5,7 +5,11 @@ from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 
+from pydantic import BaseModel, Field
+
 from .moderator_basis import ModeratorBasis, build_moderator_basis
+from .openai_client import MiroFishOpenAIClient
+from .prompts import PERSONA_EXTRACTION_SYSTEM_PROMPT, PERSONA_EXTRACTION_USER_PROMPT
 
 STOP_WORDS = {
     "about",
@@ -53,6 +57,23 @@ class RuntimePersona:
     perspective: str
     focus_note: str
     seed_grounding_note: str
+
+
+class LLMExtractedPersona(BaseModel):
+    """Pydantic model for structured persona extraction from OpenAI."""
+    label: str = Field(description="Alphanumeric persona title, e.g. 'Security Auditor'")
+    perspective: str = Field(
+        description="Classification: 'favorable', 'skeptical', 'analytical', or 'neutral'"
+    )
+    focus_note: str = Field(description="Core question or strategic angle pursued")
+    critique_vector: str = Field(description="Key risk or blindspot this persona evaluates")
+
+
+class LLMPersonaRoster(BaseModel):
+    """Structured response format for OpenAI chat.completions.parse."""
+    personas: list[LLMExtractedPersona] = Field(
+        description="List of 4 to 6 diverse, domain-relevant personas"
+    )
 
 
 @dataclass(frozen=True)
@@ -120,6 +141,97 @@ def build_runtime_persona_foundation(seed_context: SeedContext) -> RuntimePerson
         moderator_basis=moderator_basis,
         moderator=moderator,
         participants=participants,
+    )
+    validate_runtime_persona_foundation(foundation)
+    return foundation
+
+
+async def build_runtime_persona_foundation_with_openai(
+    seed_context: SeedContext,
+    client: MiroFishOpenAIClient,
+) -> RuntimePersonaFoundation:
+    """Asynchronously extracts structured stakeholder personas from seed document
+    using OpenAI Structured Outputs.
+    """
+    if not client.is_configured:
+        return build_runtime_persona_foundation(seed_context)
+
+    moderator_basis = build_moderator_basis(seed_context)
+    topic_phrase = ", ".join(seed_context.topic_keywords[:3]) or stemmed_name(
+        seed_context.source_name
+    )
+    grounding_note = (
+        f"Seed grounding uses {seed_context.source_kind} context '{seed_context.source_name}' "
+        f"with fingerprint {seed_context.fingerprint_sha256[:12]}."
+    )
+    moderator = RuntimePersona(
+        stable_label=moderator_basis.stable_label,
+        role=moderator_basis.role,
+        perspective=moderator_basis.perspective,
+        focus_note=(
+            f"Frame the round around {topic_phrase} and enforce the moderated 3-to-5 speaker rule."
+        ),
+        seed_grounding_note=grounding_note,
+    )
+
+    user_prompt = PERSONA_EXTRACTION_USER_PROMPT.format(seed_excerpt=seed_context.text_excerpt)
+    roster, _ = await client.parse_structured_output(
+        response_format=LLMPersonaRoster,
+        system_prompt=PERSONA_EXTRACTION_SYSTEM_PROMPT,
+        user_prompt=user_prompt,
+    )
+
+    participants_list: list[RuntimePersona] = []
+    seen_labels: set[str] = {moderator.stable_label}
+    for item in roster.personas[: seed_context.participant_count]:
+        clean_label = item.label.strip()
+        if clean_label in seen_labels:
+            clean_label = f"{clean_label} (Alt)"
+        seen_labels.add(clean_label)
+
+        perspective = item.perspective.lower().strip()
+        if perspective not in {"favorable", "skeptical", "analytical"}:
+            perspective = "analytical"
+
+        participants_list.append(
+            RuntimePersona(
+                stable_label=clean_label,
+                role="participant",
+                perspective=perspective,
+                focus_note=f"{item.focus_note}. Critique vector: {item.critique_vector}",
+                seed_grounding_note=grounding_note,
+            )
+        )
+
+    # Ensure required perspective diversity is satisfied
+    perspectives = {p.perspective for p in participants_list}
+    for req in ["favorable", "skeptical", "analytical"]:
+        if req not in perspectives:
+            blueprints = _participant_blueprints(topic_phrase)
+            for b_label, b_persp, b_focus in blueprints:
+                if b_persp == req:
+                    label = f"{b_label}_{req}"
+                    if label in seen_labels:
+                        label = f"{label}_auto"
+                    seen_labels.add(label)
+                    participants_list.append(
+                        RuntimePersona(
+                            stable_label=label,
+                            role="participant",
+                            perspective=req,
+                            focus_note=b_focus.format(
+                                topic_phrase=topic_phrase, source_name=seed_context.source_name
+                            ),
+                            seed_grounding_note=grounding_note,
+                        )
+                    )
+                    break
+            perspectives.add(req)
+
+    foundation = RuntimePersonaFoundation(
+        moderator_basis=moderator_basis,
+        moderator=moderator,
+        participants=tuple(participants_list),
     )
     validate_runtime_persona_foundation(foundation)
     return foundation

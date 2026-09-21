@@ -37,11 +37,31 @@ pub struct ActivationReadinessSnapshot {
     pub activation_not_ready_for_licensed_use: bool,
     pub activation_revoked_detected: bool,
     pub may_progress_past_activation_gate: bool,
+    pub execution_mode: ExecutionMode,
+}
+
+pub const PREFLIGHT_EXECUTION_MODE_ENV_VAR: &str = "PREFLIGHT_EXECUTION_MODE";
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ExecutionMode {
+    Community,
+    Enterprise,
+}
+
+pub fn current_execution_mode() -> ExecutionMode {
+    match std::env::var(PREFLIGHT_EXECUTION_MODE_ENV_VAR).as_deref() {
+        Ok("community") => ExecutionMode::Community,
+        _ => ExecutionMode::Enterprise,
+    }
 }
 
 impl ActivationReadinessSnapshot {
     pub fn blocking_reasons(self) -> Vec<&'static str> {
         let mut reasons = Vec::new();
+
+        if self.execution_mode == ExecutionMode::Community {
+            return reasons;
+        }
 
         if !self.local_validation_capability_materialized {
             reasons.push("local activation validation behavior is not materialized");
@@ -90,6 +110,10 @@ impl ActivationReadinessSnapshot {
 }
 
 pub fn activation_readiness_truth_surface() -> ActivationReadinessSnapshot {
+    activation_readiness_truth_surface_with_mode(current_execution_mode())
+}
+
+pub fn activation_readiness_truth_surface_with_mode(execution_mode: ExecutionMode) -> ActivationReadinessSnapshot {
     let activation_contract = activation_contract_basis();
     let storage_boundary = activation_storage_boundary_surface();
     let runtime_presence = runtime_presence_state();
@@ -98,11 +122,14 @@ pub fn activation_readiness_truth_surface() -> ActivationReadinessSnapshot {
     let runtime_ready = runtime_presence.runtime_detected == Some(true)
         && runtime_integrity.runtime_integrity_passed
         && runtime_integrity.execution_unblocked;
-    let activation_ready = local_validation.validation_status
-        == crate::activation_storage_boundary::ActivationValidationStatus::ActivatedValid;
+    let is_community = execution_mode == ExecutionMode::Community;
+    let activation_ready = is_community
+        || (local_validation.validation_status
+            == crate::activation_storage_boundary::ActivationValidationStatus::ActivatedValid);
 
     ActivationReadinessSnapshot {
         stage: ActivationReadinessStage::LocalValidationMaterialized,
+        execution_mode,
         activation_required_state_name: STATE_ACTIVATION_REQUIRED,
         activation_revoked_state_name: STATE_ACTIVATION_REVOKED,
         configuration_required_state_name: STATE_CONFIGURATION_REQUIRED,
@@ -123,8 +150,9 @@ pub fn activation_readiness_truth_surface() -> ActivationReadinessSnapshot {
         current_validation_detail: local_validation.validation_detail,
         activation_ready_for_licensed_use: activation_ready,
         activation_not_ready_for_licensed_use: !activation_ready,
-        activation_revoked_detected: local_validation.validation_status
-            == crate::activation_storage_boundary::ActivationValidationStatus::ActivationRevoked,
+        activation_revoked_detected: !is_community
+            && local_validation.validation_status
+                == crate::activation_storage_boundary::ActivationValidationStatus::ActivationRevoked,
         may_progress_past_activation_gate: activation_ready,
     }
 }
@@ -162,5 +190,16 @@ mod tests {
         assert!(!snapshot.activation_revoked_detected);
         assert!(!snapshot.may_progress_past_activation_gate);
         assert_eq!(blocking_reasons.len(), 1);
+    }
+
+    #[test]
+    fn activation_readiness_truth_surface_unblocks_gate_in_community_mode() {
+        let snapshot = activation_readiness_truth_surface_with_mode(ExecutionMode::Community);
+        let blocking_reasons = snapshot.blocking_reasons();
+
+        assert!(snapshot.activation_ready_for_licensed_use);
+        assert!(!snapshot.activation_not_ready_for_licensed_use);
+        assert!(snapshot.may_progress_past_activation_gate);
+        assert!(blocking_reasons.is_empty());
     }
 }

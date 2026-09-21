@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Miro Fish Desktop SaaS",
+  "productName": "Preflight",
   "version": "0.1.0",
-  "identifier": "com.mikesalazar.mirofishdesktopsaas",
+  "identifier": "com.preflight.desktop",
   "build": {
     "devUrl": "http://127.0.0.1:1420",
     "frontendDist": "../app/dist"
@@ -13,7 +13,7 @@
   "app": {
     "windows": [
       {
-        "title": "Miro Fish Desktop SaaS",
+        "title": "Preflight — AI Multi-Agent Stress-Testing Engine",
         "width": 1200,
         "height": 800,
         "resizable": true,

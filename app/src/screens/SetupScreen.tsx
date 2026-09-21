@@ -42,52 +42,6 @@ export function SetupScreen({ viewModel, actions }: SetupScreenProps) {
           alignItems: "start"
         }}
       >
-        <Panel title="Activation request">
-          <form onSubmit={actions.onActivationSubmit} style={{ display: "grid", gap: 10 }}>
-            <label style={{ display: "grid", gap: 4 }}>
-              <span>License ID</span>
-              <input
-                value={viewModel.licenseId}
-                onChange={(event) => actions.onLicenseIdChange(event.target.value)}
-                style={controlStyle}
-              />
-            </label>
-            <label style={{ display: "grid", gap: 4 }}>
-              <span>Existing activation ID</span>
-              <input
-                value={viewModel.existingActivationId}
-                onChange={(event) => actions.onExistingActivationIdChange(event.target.value)}
-                style={controlStyle}
-              />
-            </label>
-            <button
-              type="submit"
-              disabled={viewModel.submittingActivation}
-              style={{ ...buttonStyle("primary", viewModel.submittingActivation), justifySelf: "start" }}
-            >
-              {viewModel.submittingActivation ? "Submitting activation request" : "Submit activation request"}
-            </button>
-          </form>
-          {viewModel.activationResult ? (
-            <div style={{ display: "grid", gap: 8 }}>
-              <h3 style={{ margin: 0, fontSize: "0.98rem" }}>Activation result</h3>
-              <FieldText labelText="Decision type" value={label(viewModel.activationResult.decision_type)} />
-              {viewModel.activationResult.denial_reason ? (
-                <FieldText labelText="Denial reason" value={label(viewModel.activationResult.denial_reason)} />
-              ) : null}
-              {viewModel.activationResult.technical_failure_reason ? (
-                <FieldText
-                  labelText="Technical failure reason"
-                  value={label(viewModel.activationResult.technical_failure_reason)}
-                />
-              ) : null}
-              {viewModel.activationResult.detail_message ? (
-                <p style={{ margin: 0, lineHeight: 1.6 }}>{viewModel.activationResult.detail_message}</p>
-              ) : null}
-            </div>
-          ) : null}
-        </Panel>
-
         <Panel title="Provider configuration">
           <form onSubmit={actions.onProviderSubmit} style={{ display: "grid", gap: 10 }}>
             <label style={{ display: "grid", gap: 4 }}>
@@ -144,6 +98,65 @@ export function SetupScreen({ viewModel, actions }: SetupScreenProps) {
             </div>
           ) : null}
         </Panel>
+
+        <details
+          open={Boolean(viewModel.licenseId || viewModel.existingActivationId || viewModel.activationResult)}
+          style={{
+            background: "rgba(255, 255, 255, 0.02)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            borderRadius: 8,
+            padding: 12
+          }}
+        >
+          <summary style={{ cursor: "pointer", fontWeight: 600, color: "#9ca3af", marginBottom: 10 }}>
+            Enterprise Licensing (Optional)
+          </summary>
+          <Panel title="Activation request">
+            <form onSubmit={actions.onActivationSubmit} style={{ display: "grid", gap: 10 }}>
+              <label style={{ display: "grid", gap: 4 }}>
+                <span>License ID</span>
+                <input
+                  value={viewModel.licenseId}
+                  onChange={(event) => actions.onLicenseIdChange(event.target.value)}
+                  style={controlStyle}
+                />
+              </label>
+              <label style={{ display: "grid", gap: 4 }}>
+                <span>Existing activation ID</span>
+                <input
+                  value={viewModel.existingActivationId}
+                  onChange={(event) => actions.onExistingActivationIdChange(event.target.value)}
+                  style={controlStyle}
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={viewModel.submittingActivation}
+                style={{ ...buttonStyle("primary", viewModel.submittingActivation), justifySelf: "start" }}
+              >
+                {viewModel.submittingActivation ? "Submitting activation request" : "Submit activation request"}
+              </button>
+            </form>
+            {viewModel.activationResult ? (
+              <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
+                <h3 style={{ margin: 0, fontSize: "0.98rem" }}>Activation result</h3>
+                <FieldText labelText="Decision type" value={label(viewModel.activationResult.decision_type)} />
+                {viewModel.activationResult.denial_reason ? (
+                  <FieldText labelText="Denial reason" value={label(viewModel.activationResult.denial_reason)} />
+                ) : null}
+                {viewModel.activationResult.technical_failure_reason ? (
+                  <FieldText
+                    labelText="Technical failure reason"
+                    value={label(viewModel.activationResult.technical_failure_reason)}
+                  />
+                ) : null}
+                {viewModel.activationResult.detail_message ? (
+                  <p style={{ margin: 0, lineHeight: 1.6 }}>{viewModel.activationResult.detail_message}</p>
+                ) : null}
+              </div>
+            ) : null}
+          </Panel>
+        </details>
       </div>
 
       <CurrentPreflightState preflightState={viewModel.preflightState} />

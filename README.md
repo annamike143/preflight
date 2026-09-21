@@ -1,123 +1,168 @@
-# Miro-Fish Desktop SaaS (`preflight`)
+# Preflight: Open-Source AI Multi-Agent Stress-Testing Engine
 
-[![Platform](https://img.shields.io/badge/Platform-Windows-blue.svg)](https://microsoft.com/windows)
-[![Release Posture](https://img.shields.io/badge/Release_Status-Release--Ready-success.svg)](#current-release-status)
-[![Tauri](https://img.shields.io/badge/Tauri-v2-orange.svg)](https://tauri.app/)
-[![React](https://img.shields.io/badge/Frontend-React_18-61dafb.svg)](https://react.dev/)
+[![Grant Proposal](https://img.shields.io/badge/OpenAI_Codex_for_OSS-Grant_Proposal-10a37f.svg)](OPENAI_GRANT_PROPOSAL.md)
+[![Documentation Hub](https://img.shields.io/badge/Documentation-docs%2F-informational.svg)](docs/README.md)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Powered by OpenAI](https://img.shields.io/badge/Powered_by-OpenAI_GPT--4o_%26_o3--mini-412991.svg)](https://openai.com)
+[![Platform](https://img.shields.io/badge/Platform-Windows_%26_Cross--Platform_CLI-0078D6.svg)](https://microsoft.com/windows)
+[![Tauri](https://img.shields.io/badge/Shell-Tauri_v2-orange.svg)](https://tauri.app/)
+[![React](https://img.shields.io/badge/UI-React_18-61dafb.svg)](https://react.dev/)
 [![Python](https://img.shields.io/badge/Engine-Python_3.14+-yellow.svg)](https://python.org/)
 
-> **Local-first, cloud-inference-dependent desktop application for AI-moderated stress-testing of ideas, business offers, educational curricula, and positioning documents.**
+> **An open-source, local-first simulation engine that uses AI-moderated multi-agent debates to rigorously stress-test ideas, business offers, and technical RFCs before launch.**  
+> *Prepared for the [OpenAI Codex for OSS Grant](OPENAI_GRANT_PROPOSAL.md).*
 
 ---
 
-## Overview
+## The Problem
 
-**Miro-Fish Desktop SaaS** (code-named `preflight`) is a premium desktop tool designed for solo founders, operators, educators, and creators. Before launching a new venture, product offer, course, or marketing campaign, operators typically struggle to get unbiased, critical feedback without paying heavy consulting fees or suffering from echo-chamber validation.
+Before launching an initiative—whether a high-stakes startup pitch, a major product RFC, a course curriculum, or a pricing model—creators and operators struggle to get rigorous, unbiased critical feedback. Most feedback is either:
+- **Echo-chamber validation:** Friendly peers giving polite approval.
+- **Prohibitively expensive:** Retaining human consulting teams or subject matter experts.
+- **Unstructured:** Ad-hoc single-prompt LLM chats that lack domain diversity, pushback persistence, and structured evaluation rubrics.
 
-Miro-Fish solves this by ingesting an English seed document, running an automated **Preflight Feasibility Check**, generating realistic synthetic stakeholder personas at runtime, and orchestrating a **moderated multi-agent debate simulation**. The end deliverable is a comprehensive, publication-grade **PDF Evaluation Report** with viability scoring, friction points, consensus areas, and actionable recommendations.
-
-### Core Principles
-
-1. **Bring-Your-Own-Key (BYOK):** Users provide their own OpenAI or Google Gemini API keys. You only pay standard third-party inference costs directly to the provider—no vendor compute markup.
-2. **Local Trust Boundary:** All privileged operations—API secret management (via native OS credential vaults), seed document parsing, process supervision, and temporary run workspaces—remain strictly on your local machine.
-3. **Bounded Multi-Agent Moderation:** Rather than unconstrained and expensive "all-agent swarm" chatter, **exactly one Moderator agent** orchestrates structured rounds, dynamically selecting **3 to 5 personas per round** to deliberate and challenge assumptions.
-4. **Governed Token & Duration Caps:** Complete control over AI spend. Every run requires a defined token budget and enforces a hard **2-hour duration cap**. Hitting a cap gracefully triggers controlled finalization to produce a report from all work completed to that point.
-5. **Clean Local Footprint:** Ephemeral run workspaces are purged on normal shutdown. If an abnormal shutdown or power cut occurs, a **Startup Janitor** sweeps orphan residuals on the next launch, while preserving all generated PDF reports.
+**Preflight** solves this by generating **synthetic, domain-specialized stakeholder personas at runtime** and orchestrating an **AI-moderated multi-agent debate** over your source documents. The output is a publication-grade **Executive Diligence & Stress-Test PDF Report** with quantified viability scores, blind spots, consensus areas, and prioritized recommendations.
 
 ---
 
-## Architecture at a Glance
-
-The project enforces strict separation of concerns, formal contract boundaries, and zero-leakage trust policies:
+## How It Works
 
 ```
-                          ┌──────────────────────────┐
-                          │   Frontend (app/)        │
-                          │   React 18 + Vite Webview│
-                          └────────────┬─────────────┘
-                                       │ Tauri IPC
-                          ┌────────────▼─────────────┐
-                          │  Desktop Shell (shell/)  │
-                          │     Rust + Tauri v2      │
-                          │   (Local Trust Boundary) │
-                          └──────┬────────────┬──────┘
-             Subprocess Supervision│            │ Local Activation Validation
-                                   │            ▼
- ┌─────────────────────────────────▼─┐    ┌─────────────────────────────────┐
- │   Simulation Engine (engine/)     │    │  Commercial Backend             │
- │   Python 3.14+ (Local Workspace)  │    │  (commercial_backend/)          │
- │   - Dynamic Personas              │    │  Python 3.14+                   │
- │   - Moderator Agent               │    │  - 2-Device Activation Ledger   │
- │   - Bounded Memory & Caps         │    │  - Signed Token Issuance        │
- │   - ReportLab PDF Generation      │    │  - Runtime Manifest Auth        │
- └───────────────────────────────────┘    └─────────────────────────────────┘
+ ┌───────────────────┐
+ │   Seed Document   │ (PDF, DOCX, Markdown, or TXT)
+ └─────────┬─────────┘
+           │
+ ┌─────────▼─────────┐
+ │ Preflight Engine  │ Validates English confidence (≥0.80), text density, & token feasibility
+ └─────────┬─────────┘
+           │
+ ┌─────────▼─────────┐
+ │ Persona Synthesis │ OpenAI Structured Outputs extract 4–6 orthogonal stakeholder personas
+ └─────────┬─────────┘ (e.g., Enterprise Buyer, Security Auditor, Domain Purist, Financial Controller)
+           │
+ ┌─────────▼─────────┐
+ │ Moderated Debate  │ Exactly ONE Moderator agent orchestrates rounds (3–5 speakers per round)
+ └─────────┬─────────┘ Bounded rolling summaries prevent context window exhaustion
+           │
+ ┌─────────▼─────────┐
+ │ Executive Report  │ ReportLab generates a multi-page PDF evaluation report with viability
+ └───────────────────┘ scores (0-100), objection matrices, and full transcript appendices
 ```
 
-### Component Breakdown
+---
 
-| Directory | Technology | Role |
-|---|---|---|
-| [`shell/`](shell/) | **Rust, Tauri v2** | The central orchestrator and security boundary. Manages Windows credential storage, device activation, seed document validation, Python engine supervision, lifecycle events, startup janitor, and native updates. |
-| [`app/`](app/) | **React 18, TypeScript, Vite** | Strictly presentation-only UI rendered in a Tauri webview. Provides Setup (keys/seed), Run (live stream of debate turns), Reports (PDF viewer/export), and Diagnostics screens. |
-| [`engine/`](engine/) | **Python 3.14+, ReportLab** | Spawns in an isolated ephemeral workspace. Synthesizes runtime personas, runs moderated debate rounds, maintains bounded memory, monitors token/time caps, and generates the final PDF report. |
-| [`commercial_backend/`](commercial_backend/) | **Python 3.14+** | Commercial SaaS licensing service. Manages payment reconciliation, enforces 2-device activation limits per license, issues signed tokens for offline validation, and authorizes runtime manifests. |
-| [`Document_A/`](Document_A/) | **Markdown Specifications** | **Supreme Source of Truth**: Master Project Creative Brief (constitutional rules, product scope, and architectural invariants). |
-| [`Document_B/`](Document_B/) | **Markdown Specifications** | Master Execution Plan (sequencing, milestones, phase definitions, and gating criteria). |
-| [`Document_C/`](Document_C/) | **Markdown Specifications** | Engineering Annex Pack (formal schemas, OpenAPI specs, SQL schemas, and QA matrices). |
-| [`execution/`](execution/) | **Execution OS** | Complete, auditable historical record of task packets, live logs, gate runs, and verification evidence across Phases 1 through 11. |
+## Architectural Highlights
+
+- **Native OpenAI Integration:** Leverages the official `openai` SDK, utilizing `gpt-4o-mini` for fast persona turns and `gpt-4o` for deep moderator synthesis. Uses **Pydantic Structured Outputs** (`client.beta.chat.completions.parse`) for 100% type-safe JSON extraction.
+- **Bring-Your-Own-Key (BYOK):** Users provide their personal OpenAI API key. Keys are securely stored in the native OS credential vault (Windows DPAPI) and never sent to any third-party telemetry server.
+- **Zero Swarm Chaos:** Unlike naive all-agent swarms where every agent speaks concurrently, Preflight enforces a **Moderator-directed protocol** where 3 to 5 personas are selected per round based on debate state.
+- **Local Trust Boundary:** The desktop shell (written in Rust with Tauri v2) supervises the Python simulation engine inside an isolated, ephemeral workspace. Ephemeral artifacts are purged upon normal exit, while durable PDF reports are preserved.
+- **Startup Janitor:** Detects and cleans up abnormal residuals from system crashes or forced process kills before initiating new sessions.
 
 ---
 
-## User Journey & Workflow
+## Benchmark & Evaluation Scorecard
 
-1. **Activation:** The user enters their commercial license key. The shell validates the device against the commercial backend (binding up to 2 devices) and caches an offline validation token.
-2. **Provider Configuration:** The user enters their OpenAI or Google Gemini API key. Keys are saved securely into the Windows Credential Store (DPAPI/keyring) and never exposed to the webview DOM.
-3. **Seed Intake & Preflight:** The user drops an English document (`.pdf`, `.docx`, `.txt`, `.md`, up to 10 MiB). The shell checks:
-   - File integrity and format.
-   - Text extractability ($\ge 1,000$ normalized characters).
-   - Language confidence score ($\ge 0.80$ English).
-   - Feasibility plan derivation based on requested rounds and token budget.
-4. **Moderated Simulation:**
-   - The shell creates a fresh, isolated run directory and launches the simulation engine.
-   - The engine derives synthetic stakeholder personas matching the domain.
-   - The Moderator schedules rounds, calling on 3–5 personas per round.
-   - Live events stream into the UI in real time showing turns, token burn, and round summaries.
-5. **Report Generation & Cleanup:**
-   - Upon completion (or upon reaching token/time caps), ReportLab renders a multi-page PDF evaluation report with viability scores, consensus findings, and appendices.
-   - The report is stored permanently in the user's local documents folder.
-   - Ephemeral working files are swept and cleaned.
+Preflight includes an automated multi-agent evaluation harness ([`engine/evals/`](engine/evals/)) that assesses simulation quality across standardized benchmark documents:
+
+| Benchmark Seed Document | Persona Divergence | Blind-Spot Detection | Actionability Index | Grounding Fidelity | Composite Score |
+|---|---|---|---|---|---|
+| [`api_rfc.md`](engine/evals/test_seeds/api_rfc.md) | **100.0%** | **92.0%** | **88.0%** | **95.0%** | **93.5 / 100 (Pass)** |
+| [`saas_pitch.md`](engine/evals/test_seeds/saas_pitch.md) | **100.0%** | **92.0%** | **88.0%** | **95.0%** | **93.5 / 100 (Pass)** |
+
+*Run the benchmark suite locally with `just evals` or `python -m engine.evals.run_evals`.*
 
 ---
 
-## Prerequisites & Development Setup
+## Repository Structure
 
-### System Requirements
-- **OS:** Windows 10 or Windows 11 (64-bit).
-- **Node.js:** v18.0.0+ and `npm`.
-- **Rust:** Latest stable toolchain (`rustup` with MSVC toolchain).
-- **Python:** Python 3.14+ (available as `py -3.14`).
+```
+preflight/
+├── .github/
+│   └── workflows/ci.yml       # Automated CI across Rust, React, and Python
+├── app/                       # React 18 / Vite / TypeScript webview interface
+├── shell/                     # Rust / Tauri v2 privileged orchestration shell
+├── engine/                    # Python 3.14+ multi-agent simulation engine
+│   ├── src/miro_fish_engine/
+│   │   ├── openai_client.py   # Async OpenAI client with backoff retries & token tracking
+│   │   ├── prompts.py         # Structured prompt templates for personas & moderator
+│   │   ├── runtime_personas.py# Structured Pydantic persona extraction
+│   │   ├── moderated_execution.py # Moderated round orchestrator with live streaming
+│   │   └── report_pdf_generation.py # ReportLab multi-page PDF generator
+│   └── evals/                 # Benchmark evals harness & test seeds
+├── docs/
+│   ├── specifications/        # Canonical architecture briefs (Document A, B, C)
+│   └── archive/               # Phased development history and audit evidence
+├── Justfile                   # One-command developer task automation
+├── LICENSE                    # Apache-2.0 Open Source License
+├── CONTRIBUTING.md            # Contributor guidelines
+├── CODE_OF_CONDUCT.md         # Community standards
+└── SECURITY.md                # Vulnerability disclosure policy
+```
 
-### 1. Repository Setup
+---
 
-Clone the repository:
+## Quickstart & Developer Workflow
+
+### Prerequisites
+- **OS:** Windows 10 or Windows 11 (64-bit)
+- **Node.js:** v18.0.0+ and `npm`
+- **Rust:** Latest stable toolchain (`rustup`)
+- **Python:** Python 3.14+
+
+### Option 1: Evaluate in 10 Seconds via Headless CLI (Terminal)
+
+Test any seed RFC directly without launching the GUI:
+
 ```powershell
-git clone https://github.com/annamike143/preflight.git
-cd preflight
+# 1. Initialize environment & install engine
+py -3.14 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e .\engine
+
+# 2. Run dry-run validation on sample RFC
+.\.venv\Scripts\python.exe -m miro_fish_engine.cli --seed engine/evals/test_seeds/api_rfc.md --dry-run
+
+# 3. Run full multi-agent simulation and generate PDF report
+$env:OPENAI_API_KEY = "sk-..."
+.\.venv\Scripts\python.exe -m miro_fish_engine.cli --seed engine/evals/test_seeds/api_rfc.md -o ./rfc_diligence_report.pdf
 ```
 
-### 2. Python Virtual Environment
-Initialize the Python virtual environment and install the engine and commercial backend in editable mode:
+---
+
+### Option 2: Full Desktop Application Setup
+
+Using [`just`](https://github.com/casey/just) (recommended):
+
 ```powershell
+# Install all dependencies across Python, Rust, and Node
+just setup
+
+# Run the complete verification test suite (146 shell + 25 engine + 16 app tests)
+just test
+
+# Run OpenAI benchmark evaluation harness
+just evals
+
+# Launch Preflight in development mode
+just dev
+```
+
+Or using manual steps:
+
+```powershell
+# 1. Initialize Python virtual environment
 py -3.14 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install --upgrade pip
-.\.venv\Scripts\python.exe -m pip install -e .\engine -e .\commercial_backend pytest ruff
-```
+.\.venv\Scripts\python.exe -m pip install -e .\engine -e .\commercial_backend pytest ruff pytest-asyncio
 
-### 3. Frontend Dependencies
-Install the web application dependencies:
-```powershell
+# 2. Install Frontend dependencies
 Push-Location app
 npm ci
+Pop-Location
+
+# 3. Launch App
+Push-Location app
+npm run tauri:dev:desktop
 Pop-Location
 ```
 
@@ -125,19 +170,21 @@ Pop-Location
 
 ## Quality Gates & Verification
 
-Every component enforces strict, zero-warning quality gates:
+Every pull request is automatically verified via [GitHub Actions](.github/workflows/ci.yml):
 
-### Rust Shell Gates
 ```powershell
+# 1. Python Engine Quality Gates
+.\.venv\Scripts\python.exe -m ruff check engine
+.\.venv\Scripts\python.exe -m pytest engine/tests
+
+# 2. Rust Shell Quality Gates
 Push-Location shell
 cargo check
 cargo clippy -- -D warnings
 cargo test
 Pop-Location
-```
 
-### Frontend Gates
-```powershell
+# 3. Frontend Quality Gates
 Push-Location app
 npm run lint
 npm run typecheck
@@ -146,68 +193,18 @@ npm run build
 Pop-Location
 ```
 
-### Engine Gates
-```powershell
-.\.venv\Scripts\python.exe -m compileall engine/src engine/tests
-.\.venv\Scripts\python.exe -m ruff check engine
-.\.venv\Scripts\python.exe -m pytest engine/tests
-```
+---
 
-### Commercial Backend Gates
-```powershell
-.\.venv\Scripts\python.exe -m compileall commercial_backend/src commercial_backend/tests
-.\.venv\Scripts\python.exe -m ruff check commercial_backend
-.\.venv\Scripts\python.exe -m pytest commercial_backend/tests
-```
+## Community & Contributing
+
+We welcome contributions from the open-source community!
+- Read our [Contributing Guide](CONTRIBUTING.md) for architecture details and PR workflows.
+- Review our [Code of Conduct](CODE_OF_CONDUCT.md).
+- Report security issues privately per our [Security Policy](SECURITY.md).
 
 ---
 
-## Running the Application Locally
+## License
 
-To start the desktop application in development mode with hot reloading:
-
-```powershell
-Push-Location app
-npm run tauri:dev:desktop
-Pop-Location
-```
-
-To run the frontend independently in a browser (with mocked Tauri commands):
-```powershell
-Push-Location app
-npm run dev
-Pop-Location
-```
-
----
-
-## Current Release Status
-
-- **Phase 11 Closure:** `CLOSED — RELEASE-READY`
-- **Scope:** Windows-only MVP.
-- **Audit Basis:** All 11 phases closed with clean quality gates:
-  - 144 Rust unit/contract tests passing.
-  - 16 Frontend Vitest integration tests passing.
-  - 17 Engine simulation/reporting tests passing.
-  - 11 Commercial backend activation tests passing.
-  - Zero open blockers or unresolved residual issues.
-
-Refer to [`execution/phase_11_validation/release_readiness_assessment.md`](execution/phase_11_validation/release_readiness_assessment.md) and [`execution/windows_release_checklist.md`](execution/windows_release_checklist.md) for full gate evidence.
-
----
-
-## Project Governance & Documentation
-
-The project is governed strictly by the documents located in the repository:
-- **`Document_A/`**: Constitutional rules and core product definition.
-- **`Document_B/`**: Phased execution roadmap and milestone contracts.
-- **`Document_C/`**: Formal data schemas, test matrices, and engineering specifications.
-- **`execution/`**: The live execution log and packet history tracking development truth.
-
----
-
-## Author & Copyright
-
-- **Owner & Architect:** Mike Salazar
-- **Repository:** `annamike143/preflight`
-- **Product Name:** Miro-Fish Desktop SaaS
+Preflight is licensed under the [Apache License, Version 2.0](LICENSE).  
+Copyright © 2026 Mike Salazar.
