@@ -5,7 +5,7 @@
 **Primary Author & Maintainer:** Mike Salazar  
 **License:** Apache License, Version 2.0 (OSI-Approved)  
 **Target Grant Program:** [OpenAI Codex for OSS](https://openai.com/form/codex-for-oss/)  
-**Requested Benefit:** ChatGPT Pro Subscription for Core Maintainer (20x Reasoning / o1-pro Access) + Modest Evaluation API Credits  
+**Requested Benefit:** ChatGPT Pro Subscription for Core Maintainer (Frontier Reasoning & High-Compute Pro Access) + Modest Evaluation API Credits  
 
 ---
 
@@ -115,7 +115,7 @@ gantt
 ### Justification for Requested Support:
 
 1. **ChatGPT Pro Subscription (Primary Request — Core Maintainer):**
-   - **Reasoning Superpower for Architecture & Alignment:** ChatGPT Pro grants unrestricted, priority access to OpenAI's flagship reasoning models (`o1`, `o1-pro mode`, and `o3-mini`). As an active open-source maintainer, having daily, unconstrained access to high-compute reasoning enables rapid architectural iteration, precision prompt engineering for adversarial personas, and continuous automated refactoring.
+   - **Reasoning Superpower for Architecture & Alignment:** ChatGPT Pro grants unrestricted, priority access to OpenAI's premier frontier models, deep reasoning modes, and highest compute tiers. As an active open-source maintainer, having daily, unconstrained access to OpenAI's state-of-the-art reasoning capabilities enables rapid architectural iteration, precision prompt engineering for adversarial personas, and continuous automated refactoring.
    - **Zero Marginal Cash Outlay for OpenAI:** Aligns perfectly with the standard benefit package of the Codex for OSS program, empowering the project maintainer with premier tools rather than requiring corporate venture disbursements.
 
 2. **Modest Evaluation API Credits ($1,000–$2,000, Optional):**
