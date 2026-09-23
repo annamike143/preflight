@@ -5,6 +5,7 @@
 **Primary Author & Maintainer:** Mike Salazar  
 **License:** Apache License, Version 2.0 (OSI-Approved)  
 **Target Grant Program:** [OpenAI Codex for OSS](https://openai.com/form/codex-for-oss/)  
+**Requested Benefit:** ChatGPT Pro Subscription for Core Maintainer (20x Reasoning / o1-pro Access) + Modest Evaluation API Credits  
 
 ---
 
@@ -91,9 +92,9 @@ Preflight includes an automated evaluation harness ([`engine/evals/run_evals.py`
 
 ---
 
-## 5. 6-Month Roadmap & Grant Budget Allocation
+## 5. 6-Month Roadmap & Requested Grant Support
 
-We are requesting **$20,000 in OpenAI API Credits** and **$10,000 in OSS Development Support** to achieve the following milestones:
+Rather than seeking large capital grants, we are requesting a **ChatGPT Pro Subscription for the Core Maintainer** alongside a **modest pool of API evaluation credits ($1,000–$2,000)** to achieve the following milestones:
 
 ```mermaid
 gantt
@@ -111,15 +112,14 @@ gantt
     Benchmarking 50 Public OSS RFCs       :         2026-09, 2026-10
 ```
 
-### Proposed Budget Allocation:
-1. **API Inference & Benchmarking Credits ($20,000):**
-   - Stress-testing the multi-agent engine across 500+ real-world open-source RFCs (Kubernetes, Python PEPs, Rust RFCs).
-   - Fine-tuning evaluation judges and maintaining continuous benchmark regression tracking.
-2. **Open-Source Tooling & Distribution ($6,000):**
-   - Developing `@preflight/action` (a GitHub Action that runs Preflight automatically on Pull Requests modifying architectural markdown files).
-   - Cross-platform code-signing certificates for Windows, macOS, and Linux desktop binaries.
-3. **Documentation & Community Outreach ($4,000):**
-   - Video walkthroughs, interactive tutorials, and open-source maintainer onboarding workshops.
+### Justification for Requested Support:
+
+1. **ChatGPT Pro Subscription (Primary Request — Core Maintainer):**
+   - **Reasoning Superpower for Architecture & Alignment:** ChatGPT Pro grants unrestricted, priority access to OpenAI's flagship reasoning models (`o1`, `o1-pro mode`, and `o3-mini`). As an active open-source maintainer, having daily, unconstrained access to high-compute reasoning enables rapid architectural iteration, precision prompt engineering for adversarial personas, and continuous automated refactoring.
+   - **Zero Marginal Cash Outlay for OpenAI:** Aligns perfectly with the standard benefit package of the Codex for OSS program, empowering the project maintainer with premier tools rather than requiring corporate venture disbursements.
+
+2. **Modest Evaluation API Credits ($1,000–$2,000, Optional):**
+   - **Continuous CI/CD Benchmarking:** Dedicated strictly to automated evaluation runs on GitHub Actions, continuously stress-testing Preflight against 50+ real-world open-source proposals (e.g., Kubernetes KEPs, Python PEPs, and React RFCs) to ensure zero hallucination drift.
 
 ---
 
